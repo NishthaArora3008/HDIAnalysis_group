@@ -1,0 +1,526 @@
+---
+title: "Analysis on Human Development Index 2019"
+subtitle: ETC5510 Group Project, Master of Business Analytics
+author: "Xiaoyu Tian, Nurlaily Furqandari Suliana, Shaohu Chen, Nishtha Arora"
+Date: "`r Sys.Date()`"
+output:
+ bookdown::html_document2 :
+    includes:
+      before_body: header.html
+keep_md: yes
+---
+
+```{r Global, message = FALSE, warning= FALSE, echo=FALSE}
+knitr::opts_chunk$set(fig.width=15, fig.height=10, fig.align = "center") 
+```
+
+
+```{r LoadingLibraries, message=FALSE, warning=FALSE, echo=FALSE}
+library(tidytext)
+library(tidyverse)
+library(readr)
+library(haven)
+library(kableExtra)
+library(grid)
+library(Hmisc)
+library(gridExtra)
+library(ggResidpanel)
+library(cowplot)
+library(sjPlot)
+```
+
+# Introduction
+
+The Human Development Index (HDI) emphasizes on capabilities of people and uses it as a criteria for assessing the development of a country ("Human Development Index (HDI) | Human Development Reports", 2021). The data used here, is extracted from [United Nations Development Programme : Human Development Reports](http://hdr.undp.org/en/composite/HDI).
+
+The data set shows indicative data for countries with very high, high, moderate and low human development. It compares the countries for HDI value, HDI rank(2019, 2018)and SDGs (Sustainable Development Goals) 3,4,5 (2019), where SDG 3 = Life expectancy at birth, SDG 4.3 = Expected years of schooling, SDG 4.4 = Mean years of schooling, SDG 8.5 = Gross national income (GNI) per capita.
+
+The objective of the report is to analyze the data set used, by answering four research questions.
+
+```{r ReadingTidyData, message=FALSE, warning=FALSE, echo=FALSE}
+HDI <- read_csv("data/HDIData.csv") %>% rename(Degree_of_Human_Development = y)
+```
+
+# Analysis
+
+## To compute the summary statistics for each variable for every Human Development category.
+
+### The approximate number of country's in each degree of human development.
+
+```{r Fig1, fig.height= 4, fig.width=6, fig.cap= "Number of Countries in Each Degree of Human Development", aes = FALSE, message=FALSE, warning=FALSE, echo=FALSE}
+ggplot(HDI, aes(x = Degree_of_Human_Development,
+                fill = Degree_of_Human_Development)) + 
+  geom_bar() +
+  scale_x_discrete(labels = NULL)+
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+  (plot.title = element_text(hjust = 0.5)))+
+  theme_classic()
+```
+
+- The above figure \@ref(fig:Fig1), shows that, according to HDI 2019 data, maximum countries are classified as *Very High Human Development Countries*, followed by *High Human Development Countries*, *Medium Human Development Countries* and the least countries are classified as *Low Human Development Countries*. 
+
+### Boxplot that summarizes the statistic descriptive-information in each variable and degree of human development.
+
+```{r Fig2, fig.height= 5, fig.width=13, echo= FALSE, warning=FALSE, message=FALSE, fig.cap= "Summary Plot"}
+HDI_Valueplot <- ggplot(HDI,
+                        aes(y = HDI_Value,
+                            fill = "HDI_Value")) +
+   labs(x = 'HDI_Value', y = '') +
+  geom_boxplot(show.legend = FALSE) +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank()) 
+ Life_expectancyplot <- ggplot(HDI,
+                        aes(y = Life_expectancy,
+                          fill = "Life_expectancy")) +
+  labs(x = 'Life Expectancy', y = '') +
+  geom_boxplot(show.legend = FALSE) +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank()) 
+Expected_years_of_schoolingplot <- ggplot(HDI,
+                        aes(y = Expected_years_of_schooling,
+                           fill = "Expected_years_of_schooling")) +
+  labs(x = 'Expected Year of Schooling', y = '') +
+  geom_boxplot(show.legend = FALSE) +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank()) 
+Mean_years_of_schoolingplot <- ggplot(HDI,
+                        aes(y = Mean_years_of_schooling,
+                           fill = "Mean_years_of_schooling")) +
+  labs(x = 'Mean Year of Schooling', y = '') +
+  geom_boxplot(show.legend = FALSE) +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank()) 
+GNI_per_capitaplot <- ggplot(HDI,
+                        aes(y = GNI_per_capita,
+                           fill = "GNI_per_capita")) +
+  labs(x = 'GNI per Capita', y = '') +
+  geom_boxplot(show.legend = FALSE) +
+  scale_y_continuous(labels = scales::comma)+
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank()) 
+grid.arrange(HDI_Valueplot, 
+             Expected_years_of_schoolingplot, 
+             Life_expectancyplot, 
+             Mean_years_of_schoolingplot, 
+             GNI_per_capitaplot, 
+             nrow = 1)
+```
+
+- Figure \@ref(fig:Fig2) shows us the position of minimum values, maximum values, Quartile 1, Quartile 2 or median, Quartile 3, and Outlier data values. 
+
+- **Minimum**: The line under the box represents the lowest value in the data for that particular variable.
+
+- **Maximum**: The line above the box represents the maximum value in the data for that particular variable.
+
+- **Quartile**: The box represents 50% of data points between the 1st and 3rd quartiles.
+
+- **Quartile 2 or Median**: The vertical line inside each box represents the median value of the data set for that particular variable.
+
+- **Outlier Data**: The outlier data *only exist in variable Expected year of schooling and GNI per capita*.
+
+*Similar statistics are explained in detail below:*
+
+```{r Tab1,  message = FALSE, warning= FALSE, echo=FALSE}
+HDI_long <- pivot_longer(HDI, c(3:7), names_to = "Variable") %>%
+  group_by(Variable, Degree_of_Human_Development) %>%
+  summarise(Minimum = round(min(value), digits = 2),
+            Median = round(median(value), digits = 2),
+            Mean = round(mean(value), digits = 2),
+            Maximum = round(max(value), digits = 2),
+            SD = round(sd(value), digits = 2)) %>%
+  arrange(Variable, -Maximum)
+knitr::kable(HDI_long,
+             caption = 'Descriptive Analysis of Each Variable based on Degree of Human Development', booktabs = TRUE) %>%
+   kable_styling(full_width = TRUE, bootstrap_options = "bordered") %>% 
+   kable_classic(c("striped", "hover"))
+```
+
+Table \@ref(tab:Tab1) shows the mean, median, minimum, maximum and standard deviation values for each *SDG* mentioned above and for the *HDI value* too, with respect to different *degrees of Human Development Index*.
+
+      
+## To compare and contrast the 'GNI columns' for 'very high' and 'medium development countries' and to conduct an analysis to assess whether the 'very high development countries' translate their income better than the 'medium development countries' in the areas of human development.
+
+```{r Q2Filter, message = FALSE, warning= FALSE, echo=FALSE, }
+hdi_r <- HDI %>% 
+  select(Country, HDI_rank_2019, HDI_Value, GNI_per_capita, GNI_rank_minus_HDI_rank, Degree_of_Human_Development) %>% 
+  filter(Degree_of_Human_Development %in% c("VERY HIGH HUMAN DEVELOPMENT", "MEDIUM HUMAN DEVELOPMENT")) %>%
+  mutate(gni_rank_2019 = HDI_rank_2019 + GNI_rank_minus_HDI_rank)
+```
+
+- In this section, we analyze the economic sector for both: *Very high human development countries* and *Medium human development countries*. 
+
+- The analysis is based on the *GNI per capita given* in the data set.
+
+- The aim is to find out how the *GNI per capita* would impact the *HDI value* between the two groups (Very high and medium human development countries), and whether the *very high human development countries* translate their income better than the *medium development countries*.
+
+### Understanding the distribution of variables
+
+```{r Fig3, warning=FALSE, message=FALSE, echo=FALSE, fig.cap = "GNI distribution for very high and medium development group", fig.height= 4, fig.width=7}
+hdi_r %>% ggplot(aes(x = GNI_per_capita, fill = Degree_of_Human_Development)) + 
+  geom_histogram(bins = 29, alpha = 0.4) +
+  scale_x_continuous(labels = scales::comma)+
+  scale_fill_manual(values=c("#E69F00", "#56B4E9"))+
+  theme_classic()
+```
+
+The above figure \@ref(fig:Fig3) shows that the distribution for both groups are skewed. Hence, we use the Log-transformation on GNI per capita for further analysis.
+
+```{r Fig4, fig.cap= "GNI distribution for very high and medium development group", warning=FALSE, message=FALSE, echo=FALSE, fig.height= 4, fig.width=7}
+lnhdi_r <- hdi_r %>%
+  mutate(`Log of GNI per capita` = log(GNI_per_capita))
+lnhdi_r %>% ggplot(aes(x = `Log of GNI per capita`, fill = Degree_of_Human_Development))+ 
+  geom_histogram(bins = 29, alpha = 0.4) +
+  scale_fill_manual(values=c("#E69F00", "#56B4E9"))+
+  theme_classic()
+```
+
+- Figure \@ref(fig:Fig4) shows the distribution of GNI per capita in logarithm.
+
+- Here, it is clear that both group's GNI values display normal distributions. 
+
+- We can see that *very high human development* is significantly higher than *medium development countries* in *GNI values*, and only a small portion of countries from the medium development group overlaps with the other group. **This indicates that higher GNI may result a higher development county**.
+
+### GNI Summary Statistics
+
+```{r Tab2, message = FALSE, warning= FALSE, echo=FALSE}
+lnhdi_r %>% 
+  group_by(Degree_of_Human_Development) %>%
+  summarise(min = min(`Log of GNI per capita`, na.rm=TRUE),
+            q1 = quantile(`Log of GNI per capita`, 0.25, na.rm=TRUE),
+            median = median(`Log of GNI per capita`, na.rm=TRUE),
+            q3 = quantile(`Log of GNI per capita`, 0.75, na.rm=TRUE),
+            max = max(`Log of GNI per capita`, na.rm=TRUE),
+            mean = mean(`Log of GNI per capita`, na.rm=TRUE), 
+            sd = sd(`Log of GNI per capita`, na.rm=TRUE),
+            n = n()) %>% 
+  kbl(digits = 1, caption = "GNI per capita summary statistics")%>% 
+ kable_material(c("striped", "hover"))
+
+```
+
+Table \@ref(tab:Tab2) shows the summary statistics for GNI_per_capita log values where 'n' represents count of countries, falling under the given degree of human development.
+
+```{r Fig5, warning=FALSE, message=FALSE, echo=FALSE, fig.height= 4, fig.width=5, fig.cap= "No. of Countries in each degree of HDI V/S GNI per capita"}
+a1 <- lnhdi_r %>% 
+  ggplot(aes(x = Degree_of_Human_Development , y= (`Log of GNI per capita`))) +
+    geom_violin(draw_quantiles = c(0.25, 0.5, 0.75), 
+                fill = "lemonchiffon1") +
+  ylab("GNI per capita") +
+  xlab("") +
+  theme_classic()
+a1
+```
+
+By comparing the summary statistics in table \@ref(tab:Tab2) with the figure  \@ref(fig:Fig5), it is clear to see that the GNI per capita in the very high human development group is overall higher than the medium human development. This may suggest that **higher income will result in a high human development group, which means a higher HDI value.** 
+
+### Comparing the regression
+
+```{r Fig6, message = FALSE, warning= FALSE, echo=FALSE, fig.height= 4, fig.width=7, fig.cap= "HDI Value V/S GNI per capita for Very High and Medium HDI Group"}
+lnhdi_r %>%
+  group_by(Degree_of_Human_Development) %>%
+  ggplot(aes(x = `Log of GNI per capita`, y = HDI_Value, colour = Degree_of_Human_Development)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+   scale_shape_manual(values=c(3, 16, 17))+ 
+  scale_color_manual(values=c("Red","Blue"))+
+  labs(x = "Log of GNI per capita", y = "HDI value") +
+  theme(legend.position="top")+ 
+  theme_classic()+
+  labs(color = "HDI group")
+  
+```
+
+- In Figure \@ref(fig:Fig6), we compute linear models between GNI and HDI values for both group. 
+
+- We can see that the regression line for the *very high HDI group* is above the *medium HDI group*. However, as the GNI values for both group do not overlap with each other, we generate the model summaries for both group as follows: 
+
+```{r, message = FALSE, warning= FALSE, echo=FALSE}
+vhigh <- lnhdi_r %>% filter(Degree_of_Human_Development == "VERY HIGH HUMAN DEVELOPMENT")
+vmod <- lm(`Log of GNI per capita` ~ HDI_Value, data = vhigh)
+tab_model(vmod, title = "Table for Very High HDI group")
+```
+
+
+The above table shows a **slop of 6.7067** for Very High Human Development Group Category.
+
+
+```{r Tab3, message = FALSE, warning= FALSE, echo=FALSE}
+med <- lnhdi_r %>% filter(Degree_of_Human_Development == "MEDIUM HUMAN DEVELOPMENT")
+mmod <- lm(`Log of GNI per capita` ~ HDI_Value, data = med)
+tab_model(mmod, title = "Table for Medium HDI group")
+
+```
+
+
+The above table shows a **slop of 6.0107** for Medium Human Development Group Category.
+
+
+- Therefore, very high HDI groups shows a higher slop than medium HDI group. **A higher slope means that the very high HDI group translate their income into the HDI values better than the medium HDI group.**  
+
+*Now compairing with Diagnostic plots:*
+
+```{r Fig7, fig.cap = "Diagnostic Plots for Linear Models", message = FALSE, warning= FALSE, echo=FALSE, fig.width= 5, fig.height= 6}
+resid_compare(models = list(vmod,mmod
+                            ),
+              plots = c("resid", "qq", "hist"),
+              smoother = TRUE,
+              qqbands = TRUE,
+              title.opt = TRUE)+
+  theme_classic() 
+```
+
+In figure \@ref(fig:Fig7), the *left side* diagnostic plot shows predicted values for *very high HDI group* and *right side* diagnostic plot shows *medium HDI group.*
+
+```{r Tab4, message = FALSE, warning= FALSE, echo=FALSE}
+i <- broom::glance(vmod)
+j <- broom::glance(mmod)
+
+knitr::kable(i, align = "c", caption = "Very High HDI Group Linear Model Values") %>% 
+  kable_material(c("striped", "hover"))
+```
+
+```{r Tab9, message = FALSE, warning= FALSE, echo=FALSE}
+j <- broom::glance(mmod)
+knitr::kable(j, align = "c", caption = "Medium Group Linear Model Values") %>% 
+  kable_material(c("striped", "hover"))
+
+```
+
+- By checking the diagnostic plots of the linear model in \@ref(fig:Fig7), we can see both model are normal distributions and the model do provide a goodness of fit to the data. 
+
+- However, if we look at the r-square value in \@ref(tab:Tab4) and  \@ref(tab:Tab9), both model shows a low coefficient of determination. This suggests that GNI is not the only fundamental variables that determines the HDI value. 
+
+- Therefore, we can conclude that although the very high HDI group performs better in both GNI and HDI than medium HDI group, there is **only a medium correlation between GNI and HDI values to show that very high HDI translates income better.**
+
+
+## Calculate the gap between the ‘expected years of education’ and the ‘average years of education’ for countries with different levels of Human Development, to analyze if countries with high levels of human civilization are estimated to have high levels of expected education. Therefore, judge if it is inaccurate to use the ‘average value of expected years of education and average years of education’ for the calculation of HDI.
+
+```{r Q3Filter, message = FALSE, warning= FALSE, echo=FALSE}
+HDI_residual <- HDI %>% 
+  mutate(residual_years_of_schooling = Expected_years_of_schooling - Mean_years_of_schooling) %>% arrange(desc(residual_years_of_schooling))
+HDI_residual_col <- HDI_residual %>% mutate(Degree_of_Human_Development = as.factor(Degree_of_Human_Development), new_col = reorder_within(Country, residual_years_of_schooling,Degree_of_Human_Development))
+```
+
+
+```{r Fig8, message = FALSE, warning= FALSE, echo=FALSE, fig.height= 21, fig.width=18, fig.cap= "Gap between the ‘expected years of education’ and the ‘average years of education', for different levels of Human Development" }
+ggplot(HDI_residual_col,
+       aes(x = residual_years_of_schooling,
+           y = new_col, fill= Degree_of_Human_Development)) + 
+  geom_col()+
+    scale_y_reordered() + 
+  facet_wrap(~Degree_of_Human_Development, scales = "free") +
+  labs( y = "Countries' names",
+        x = "Gap between the ‘expected years of education’ and the ‘average years of education’"
+         ) +
+  theme_classic(base_size = 15)+
+  scale_fill_brewer(palette = "Pastel2")
+```
+
+The figure \@ref(fig:Fig8) indicates that the residual between the expected years of education and the average years of education in **some** countries with high human development is larger than that in countries with low human development (Kovacevic, 2010).
+
+```{r Tab5, message = FALSE, warning= FALSE, echo=FALSE}
+detail_educa_year <- HDI_residual %>% select(Country,Degree_of_Human_Development,residual_years_of_schooling) %>% group_by(Degree_of_Human_Development) %>% arrange(desc(residual_years_of_schooling)) %>% head(12)
+
+knitr::kable(detail_educa_year,
+             caption = "Top 12 Countries with high residual years of schooling for different Degree of Human Development",
+             booktabs = TRUE) %>%
+   kable_material(c("striped", "hover"))
+```
+
+The table above \@ref(tab:Tab5) shows the specific countries information that have the 12 highest **residual (Gap between the ‘expected years of education’ and the ‘average years of education’)** values. 
+
+- This shows that **some countries with high human development overestimate the expected years of education for people in their countries.** 
+
+```{r Tab6, message = FALSE, warning= FALSE, echo=FALSE}
+summary_educa_year <-HDI_residual %>% 
+  group_by(Degree_of_Human_Development) %>% 
+  summarise(`Minimum RYS` = min(residual_years_of_schooling, na.rm = TRUE), `Maximum RYS`= max(residual_years_of_schooling, na.rm = TRUE),
+            `Median RYS` = median(residual_years_of_schooling, na.rm = TRUE)) %>% arrange(`Median RYS`) 
+
+knitr::kable(summary_educa_year,
+             caption = "Summary: Residual years of schooling (RYS) for different Degree of Human Development ",
+             booktabs = TRUE) %>%
+   kable_styling(bootstrap_options  = c("striped", "hold_position")) %>% 
+   kable_material(c("striped", "hover"))
+```
+
+However, table \@ref(tab:Tab6) shows that the Residual Years of schooling (*average value of the difference between the 'expected years of education' and the 'average years of education'*), with a 'high degree of human development', is smaller, **which contradicts the previous observations**.
+
+
+```{r Fig9, fig.height= 10, fig.width=20, message = FALSE, warning= FALSE, echo=FALSE, fig.cap="Detals about medium residual years of schooling for different Degree of Human Development"}
+fig1<- HDI_residual %>% 
+  mutate(residual_years_of_schooling_log = log10(residual_years_of_schooling+20)) %>% 
+  mutate(Degree_of_Human_Development = fct_reorder(as_factor(Degree_of_Human_Development),
+                                  residual_years_of_schooling_log,
+                                  median, na.rm= TRUE)) %>% 
+  ggplot(aes(x=Degree_of_Human_Development, y = residual_years_of_schooling_log)) + 
+  geom_point(alpha = 20) + 
+geom_jitter(position=position_jitter(0.2)) + 
+  stat_summary(fun.data="mean_sdl",  fun.args = list(mult=1), 
+               geom="pointrange", color = "black")+
+  xlab("Degree of Human Development") + 
+  ylab("residual years of schooling (log)") +
+  theme_bw() +
+  theme(axis.text = element_text(size = 7))
+
+fig2<-HDI_residual %>% 
+  mutate(residual_years_of_schooling_log = log10(residual_years_of_schooling+20)) %>% 
+  mutate(Degree_of_Human_Development = fct_reorder(as_factor(Degree_of_Human_Development),
+                                  residual_years_of_schooling_log,
+                                  median, na.rm= TRUE)) %>% 
+  ggplot(aes(x=Degree_of_Human_Development, y = residual_years_of_schooling_log)) + 
+  geom_point(alpha = 0.2) + 
+  geom_violin(draw_quantiles = c(0.1, 0.25, 0.5), fill = "orange") + 
+  xlab("Degree of Human Development") + 
+  ylab("residual years of schooling (log)") +
+  theme_classic()
+grid.arrange(fig1,fig2, ncol=2)
+```
+
+- By figure \@ref(fig:Fig9) we further observe that because there are more countries in 'high HDI group' than 'low HDI group', and only a small part of 'high HDI group' have excessive differences.
+
+- Although countries in 'low HDI group' has lower 'maximum difference value', the large difference in most countries leads to a large average. 
+
+- Therefore,  **it is accurate to use the ‘average value of expected years of education' and 'average years of education’ for the calculation of HDI.**
+
+## Compare and contrast HDI ranks for 2018 and 2019 i.e. compare ranks for countries and examine their decline or increase in HDI rank from 2018 to 2019.
+
+```{r SelectingforQ4, message=FALSE, warning=FALSE, echo=FALSE}
+Q4 <- HDI %>% 
+  select(HDI_rank_2019, Country,HDI_rank_2018, Degree_of_Human_Development) %>% 
+  mutate(Difference = if_else(condition = HDI_rank_2019 == HDI_rank_2018,
+                              true = "Same",
+                              false = "Different")) 
+```
+
+There is a difference in HDI ranks for some countries from 2018 to 2019. 
+The value below shows the number of countries experiencing different HDI values in both years.
+
+```{r Diff, message=FALSE, warning=FALSE, echo=FALSE, }
+Diffr <- Q4 %>% 
+  dplyr::filter(Difference == "Different") 
+Same <- Q4 %>% 
+  dplyr::filter(Difference == "Same")
+```
+
+```{r Tab7, message=FALSE, warning=FALSE, echo=FALSE,}
+Tab1 <- count(Diffr) %>% 
+rename(`No. of countries with rank difference` = n )
+knitr::kable(Tab1, align = "c", caption = "No. of countries with rank difference") %>% 
+   kable_material(c("striped", "hover"))
+```
+
+The above table \@ref(tab:Tab7) shows the total number of countries which have different HDI rank for the 2018 and 2019.
+
+```{r Fig10, message=FALSE, warning=FALSE, echo=FALSE, fig.width=8, fig.height=5, fig.cap= "Rank difference v/s Countries"}
+Fig1 <- Diffr %>% 
+  mutate(IncOrDec = if_else(condition = Diffr$HDI_rank_2019 > Diffr$HDI_rank_2018,
+                             true = "Increase",
+                             false = "Decline")) %>% 
+   mutate(DiffValue = (HDI_rank_2019 - HDI_rank_2018))
+
+ggplot(Fig1 , aes( IncOrDec, DiffValue, fill= Degree_of_Human_Development)) +
+  geom_bar(stat = "Identity") +
+theme_classic() +
+scale_fill_brewer(palette = "Pastel2")+
+  theme(axis.title.x = element_blank())
+```
+
+Figure \@ref(fig:Fig10) represents a relationship: 'Difference in 2019 HDI rank and 2018 HDI rank' v/s 'Countries of different HDI Groups'.
+
+- We observe that there are more countries that have experienced a decline in rank from 2018 to 2019 (negative values on graph), than the countries whose rank has gone up.
+
+- Out of countries that have experienced a decline in rank from 2018 to 2019, higher 'negative values' are observed for 'high HDI group'.
+
+- Out of countries that have experienced an increase in rank from 2018 to 2019, maximum increase is observed among 'high HDI group' as well.
+
+```{r Tab8, message=FALSE, warning=FALSE, echo=FALSE}
+Tab2 <- (count(Q4) - count(Diffr)) %>% 
+        rename(`No. of countries with the same rank` = n ) 
+knitr::kable(Tab2, align = "c", caption  = "No. of countries with same rank") %>% 
+   kable_material(c("striped", "hover"))
+```
+
+The above table \@ref(tab:Tab8) shows the total number of countries which have the same HDI rank for the 2018 and 2019.
+
+```{r Fig11, fig.cap = "Countries with same HDI rank for 2018 and 2019", message=FALSE, warning=FALSE, echo=FALSE}
+ggplot(Same, aes(x = HDI_rank_2019, 
+                 y = Country)) +
+  geom_jitter(position = position_jitter(width = 0.3), aes(color = factor(Degree_of_Human_Development)), size = 1.5, alpha = 10) +
+  facet_grid(~ Degree_of_Human_Development) +
+  theme(axis.text.x = element_text(size =20)) +
+  theme_bw() +
+  xlab("HDI Rank") +
+  ylab("Countries with same rank") 
+```
+
+The above figure \@ref(fig:Fig11), gives the names of countries which have maintained their rank form 2018 to 2019 (no change in rank). 
+
+- It also shows that lowest rank is for **Norway** for both the years, which **belongs to very high HDI group.**
+
+# Conclusion
+
+- **Most** countries fall under *Very High Human Development* and **few** under *Low Human Development*. 
+
+- HDI value, life expectancy, and mean year of schooling have more values as compared to 'expected year of schooling' and GNI. Also **outlier data only exist in variable Expected year of schooling and GNI per capita.**
+
+- **Higher income** will result in a **high human development group**, which means a **higher HDI value**. 
+
+- **Very High HDI Group** translates **income better.**
+
+- It is **accurate** to use the **‘average value of expected years of education and average years of education’ for the calculation of HDI.**
+
+- There are **122 countries** that have a **different HDI rank** for 2018 and 2019. Out of which, **more** countries have had a **decline** in rank from 2018 to 2019, than an increase.  
+
+- There are **77 countries** that have the **same rank** for 2018 and 2019, out of which, **Norway has maintained its 1st rank overall.**
+
+# References
+
+[1]Wickham et al., (2019). Welcome to the tidyverse. Journal of Open
+Source Software, 4(43), 1686, https://doi.org/10.21105/joss.01686
+  
+[2] Hadley Wickham and Jim Hester (2020). readr: Read Rectangular Text
+Data. R package version 1.4.0.
+https://CRAN.R-project.org/package=readr
+  
+[3] Hadley Wickham and Evan Miller (2020). haven: Import and Export
+'SPSS', 'Stata' and 'SAS' Files. R package version 2.3.1.
+https://CRAN.R-project.org/package=haven
+  
+[4] Hao Zhu (2021). kableExtra: Construct Complex Table with 'kable'
+and Pipe Syntax. R package version 1.3.4.
+https://CRAN.R-project.org/package=kableExtra
+  
+[5] R Core Team (2021). R: A language and environment for statistical
+computing. R Foundation for Statistical Computing, Vienna, Austria.
+URL https://www.R-project.org/.
+  
+[6] Frank E Harrell Jr, with contributions from Charles Dupont and many
+others. (2021). Hmisc: Harrell Miscellaneous. R package version
+4.5-0. https://CRAN.R-project.org/package=Hmisc
+  
+[7] Baptiste Auguie (2017). gridExtra: Miscellaneous Functions for
+"Grid" Graphics. R package version 2.3.
+https://CRAN.R-project.org/package=gridExtra
+  
+[8] Katherine Goode and Kathleen Rey (2019). ggResidpanel: Panels and
+Interactive Versions of Diagnostic Plots using 'ggplot2'. R package
+version 0.3.0. https://CRAN.R-project.org/package=ggResidpanel
+
+[9] Claus O. Wilke (2020). cowplot: Streamlined Plot Theme and Plot
+Annotations for 'ggplot2'. R package version 1.1.1.
+https://CRAN.R-project.org/package=cowplot
+  
+[10] Lüdecke D (2021). _sjPlot: Data Visualization for Statistics in
+Social Science_. R package version 2.8.7, <URL:
+https://CRAN.R-project.org/package=sjPlot>.
+
+[11] Silge J, Robinson D (2016). “tidytext: Text Mining and Analysis Using Tidy Data
+Principles in R.” _JOSS_, *1*(3). doi: 10.21105/joss.00037 (URL:
+https://doi.org/10.21105/joss.00037), <URL:
+http://dx.doi.org/10.21105/joss.00037>.
+
+[12] Kovacevic, M. (2010). Review of HDI Critiques and Potential Improvements. Human Development Research Paper, 2010/33. Retrieved 24 May 2021, from https://www.researchgate.net/publication/235945302_Review_of_HDI_Critiques_and_Potential_Improvements_Human_Development_Research_Paper_201033
+
+[13] Human Development Index (HDI) | Human Development Reports. (2021). Retrieved 24 May 2021, from http://hdr.undp.org/en/content/human-development-index-hdi
