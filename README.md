@@ -2,9 +2,9 @@
 
 - Institute: Monash University, Clayton
 
-- Subject: ETC5510 - Introduction to data analysis - S1 2021
+- Subject: ETC5510 - Introduction to data analysis - Semester 1 2021
 
-- Team: T12_Fri_kable
+- Team name: T12_Fri_kable
 
 # Table of Contents
 
@@ -37,18 +37,22 @@ Technology used :
 
 To run the project :
 
-- Open folder : Kable_5510
+- Download the project
 
-- Open R project inside the folder, named : Kable_5510.Rproj
+- Knit 'Kable_report.rmd' for reproducing the report
 
-- Open Rmd File, named -> Kable_milestone3.rmd (Report)
-                       -> Kable_FlexDash.Rmd (Flex Dashboard)
+- Knit 'Kable_FlexDash.Rmd' for reproducing flexdashboard
 
-- Run/Knit
+OR
+
+- Open 'Kable_report.html' and 'Kable_FlexDash.html' for viewing report and presentation.
+
 
 To view the data separately:
 
-Data location -> 'Data' Folder in 'Kable_5510' folder -> Open file 'HDIData.csv'.
+Data location -> 'Data' Folder  -> Open file 'HDIData.csv'.
+
+- The project folder contains 'Data_cleaning.Rmd' where data has been cleaned and its html can be viewed as well (Data_cleaning.html)
 
 # Goals of Assignment - Answering the following research questions:
 
@@ -86,11 +90,11 @@ The Human Development Index (HDI) is a statistic composite index of life expecta
 - **Degree_of_Human_Development** : The cutoff-points are HDI of less than 0.550 for low human development, 0.550–0.699 for medium human development, 0.700–0.799 for high human development and 0.800 or greater for very high human development.
 
 # Credits  :
-- Author1: "Xiaoyu Tian"
+- Author1 (Section 2.2): "Xiaoyu Tian"
 
-- Author2: "Nishtha Arora"
+- Author2 (Section 2.4): "Nishtha Arora" 
 
-- Author3: "Shaohu Chen"
+- Author3 (Section 2.3): "Shaohu Chen"
 
-- Author4: "Nurlaily Furqandari Suliana"
+- Author4 (Section 2.1): "Nurlaily Furqandari Suliana"
 
